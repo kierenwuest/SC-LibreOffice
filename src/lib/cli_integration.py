@@ -6,10 +6,11 @@ def check_cli_version():
     """
     pass  # TODO: Implement this function
 
-def run_cli_command(command):
+def run_cli_command(command: list) -> str:
     """
     Placeholder function to run a Salesforce CLI command.
     :param command: The CLI command to execute.
+    :return: Command output as a string.
     """
     pass  # TODO: Implement this function
 

@@ -1,6 +1,13 @@
 import subprocess
 import pytest
 from unittest.mock import patch, Mock
+from lib.cli_integration import run_cli_command, list_connected_orgs, set_working_org, get_org_details 
+
+@pytest.fixture
+def mock_subprocess():
+    """Fixture to mock subprocess.run."""
+    with patch('subprocess.run') as mock_run:
+        yield mock_run
 
 def run_mocked_subprocess(cmd, returncode, stdout, stderr=""):
     """Helper function to mock subprocess.run."""
@@ -28,24 +35,23 @@ def test_sf_cli_commands(cmd, expected, returncode, stderr):
     else:
         assert stderr in result.stderr
 
-@patch('subprocess.run')
-def test_sf_cli_org_list(mock_run):
+def test_sf_cli_org_list(mock_subprocess):
     """Test that the Salesforce CLI can list orgs successfully."""
-    mock_run.return_value = Mock(
+    mock_subprocess.return_value = Mock(
         returncode=0,
         stdout="=== Orgs\nALIAS USERNAME ORGID STATUS\nprod user@example.com 00Dxxxx Active",
         stderr=""
     )
     result = subprocess.run(['sf', 'org', 'list'], capture_output=True, text=True)
-    assert result.returncode == 0
+    assert result.returncode == 0, "CLI command failed unexpectedly"
     lines = result.stdout.splitlines()
-    assert len(lines) > 1
-    assert 'ALIAS' in lines[0] and 'USERNAME' in lines[0]
+    assert lines[0] == "=== Orgs", "First line of CLI output should indicate orgs section"
+    assert 'ALIAS' in lines[1] and 'USERNAME' in lines[1], "Headers missing in CLI output"
+    assert len(lines) > 2, "No orgs found in CLI output"
 
-@patch('subprocess.run')
-def test_sf_cli_invalid_command(mock_run):
+def test_sf_cli_invalid_command(mock_subprocess):
     """Test that the Salesforce CLI handles invalid commands gracefully."""
-    mock_run.return_value = Mock(returncode=1, stdout="", stderr="Error: command not found")
+    mock_subprocess.return_value = Mock(returncode=1, stdout="", stderr="Error: command not found")
     result = subprocess.run(['sf', 'invalidcommand'], capture_output=True, text=True)
     assert result.returncode != 0
-    assert result.stderr
+    assert "command not found" in result.stderr

@@ -1,0 +1,195 @@
+StoreConnect Salesforce Data Interface for Libre Office Calc
+
+Summary: (TODO: Exec summary for users)
+
+Solution Design:
+Utilise LibreOffice SDK to create a Worksheet tabbed-spreadsheet inteface, utilising Python and Salesforce CLI to query and load data to a salesforce org.  
+
+Features:
+1. View and Set Salesforce Org:
+  # Dependenicies: 
+    SF CLI is up to date
+    A local variable of 'WorkingOrgAlias' is created and available for this extension.
+    A local constant of 'config folder' is created and available for this extension.
+    App menus (Data -> SC-Calc -> Manage Source)
+    Opens Config Modal/Screen
+  # Artifact:
+    ## 'Manage Sources' Config Screen/Modal
+      Section 1: "CLI Orgs"
+        Selectable Table list of Orgs
+          Section 1a: (below table of section 1): "SF CLI Status:"
+            Output SF CLI status display "Up to date & version" as displayed from the output of SF CLI
+              Columns Type, Alias, Username, Org Id, Status
+          Section 1b (under table Section 1a): "Set Working Org" Button - when a row in the table of section 1 is selected and this button is clicked then WorkingOrgAlias is set to the Alias of the selected row.   
+      Section 2:
+        Section 2b: Currnet Working Org Alias (WorkingOrgAlias) Alias is displayed 
+        Section 2c: Currnet Working Org Alias 'Details' Button. Opens a modal with the text detials returned from $ sf org display -o {WorkingOrgAlias} --verbose
+        Section 2d: Currnet Working Org Alias 'Limits' Button. Opens a modal with the text detials returned from $ sf org limits -o {WorkingOrgAlias} --verbose
+  # Functions:
+    ## List and View SF CLI Connected Orgs 
+      $ sf org list
+    ## Set Working Org WorkingOrgAlias
+      Select Org
+        Select and Set Working Org
+    ## TODO: Authenticate New    
+        Authenticate new Salesforce Org
+          $ sf org login web -a {WorkingOrgAlias}     
+2. Set and Define Objects and Queries:
+  # Dependenicies:
+    A Working Org is set
+  # Artifact:
+      ## Org Scope Config File
+      A configuration file which defines the scope of the Salesforce Data model
+      ### Structure:
+      ConfigFile: {
+        Name: { "FileName" },
+        SFDC-API-Version: { vXX.X },
+        Valid-SC-Pkg-Version: { vXX.X.X.X }, 
+        WorkingOrgAlias: {
+          Object_API_Name: {
+            SOQL: { SELECT Id, ... FROM ... },
+            ExternalKey-API-Name: { Field_Name__c },
+            ReadOnly Fields: {
+              Field_Name__c,
+              Field_Name__c,
+              Field_Name__c,
+              Field_Name__c
+            },
+            Required-Fields: {
+              Field_Name__c,
+              Field_Name__c,
+              Field_Name__c,
+              Field_Name__c
+            }
+          }
+        }
+      }
+      ### Default StoreConnect Queries Template
+        ConfigFile: {
+          Name: { "Default" },
+          SFDC-API-Version: { vXX.X },
+          Valid-SC-Pkg-Version: { v19.0.0.1 },
+          WorkingOrgAlias: {
+            Object_API_Name: {
+              SOQL: { SELECT Id, ... FROM ... },
+              ExternalKey-API-Name: { Field_Name__c },
+              ReadOnly-Fields: {
+              Field_Name__c,
+              Field_Name__c,
+              Field_Name__c,
+              Field_Name__c
+              },
+              Required-Fields: {
+              Field_Name__c,
+              Field_Name__c,
+              Field_Name__c,
+              Field_Name__c
+              }
+            },
+            Object_API_Name: {
+              SOQL: { SELECT Id, ... FROM ... },
+              ExternalKey-API-Name: { Field_Name__c },
+              ReadOnly-Fields: {
+              Field_Name__c,
+              Field_Name__c,
+              Field_Name__c,
+              Field_Name__c
+              },
+              Required-Fields: {
+              Field_Name__c,
+              Field_Name__c,
+              Field_Name__c,
+              Field_Name__c
+              }
+            },
+            ...
+          }
+        } 
+  # Functions:
+    Load Custom Config File  
+    Set Default Config File
+    View Config Objects List
+      Select Object - For Object
+        View query
+        Edit query
+        Save query
+        View External Key
+        Edit External Key
+        Save External Key
+        View ReadOnly Columns
+        Edit ReadOnly Columns
+        Save ReadOnly Columns
+    Validate Config File
+      Check ExternalKey_API_Name: { Field_Name__c } is blank or null or if NOT blank or null if it exisits on Object_API_Name
+      Test run queries
+      Count and display successes
+      Count and display for errors
+3. Query and Collect Data:
+  # Dependencies: 
+    For Set Working Org
+  # Functions:
+    Query All - For All Object_API_Names:
+      Show warning modal "Overwrites any exisiting data" Okay / Cancel
+      Create tabbed Calc Sheet in ODS Worksheet .ods
+        Name the Tab the value for Object_API_Name
+      Query the Object_API_Name query and fill sheet with data output per tabbed sheet/Object_API_Name
+      Append a column named "API Response" after the last query field
+      For each row IF row query is a success, in the "API Response" column output "Successfully Queried at {NOW()}"
+        Else output error message
+      Overwrites exisiting data
+      If no rows are returned do not output any rows or messages
+    Query Current Tab - For Current Selected Tab
+      Show warning modal "Overwrites any exisiting data" Okay / Cancel
+      Query the Currently selected and view tab use Object_API_Name of tab to fetch the query and fill sheet with data output for Object_API_Name
+      Overwrites exisiting data
+  # Artifacts:
+    Running Query and Collect Data, creates an ODS worksheet of many tabs, a tab for each Object_API_Name.
+    This ods spreadsheetfull of tabs can be saved as per LibreOffice Calc standard funcitonality save as
+    Tabs should have an indicator if they are using External Id
+    Columns should have an indicator if they are Read Only fields.
+    Columns should have an indicator if they are required.
+    There should be a last column created appended after the last queried field of Object_API_Name tab, named "API Response", for API Dataload Error messages.
+    Display on each Tab display [ "{Object_API_Name}", (X), (#Y,#Z), (#E) ]
+      Where X shows if ExternalKey_API_Name is being used. 
+      Where #Y is the count of rows with an Id (or ExternalId if ExternalKey_API_Name is being used)
+      Where #Z is the count of rows without an Id (or ExternalId if ExternalKey_API_Name is being used)
+      Where #E is the count of rows with an Error
+        Example Test Scenarios: 
+          [ Account X (0,5) (0) ] = API Name of Account Object, using ExternalKey, zero queried rows, five new rows without ExternalId's, zero errors.
+          [ Custom_Object__c X (300,4) (4) ] = API Name of Custom_Object__c using ExternalKey, three hundred rows with Ids, four rows with without ExternalId's, 4 error messages. 
+          [ Contact (77,0) (0) ] = API Name of Contact Object using Id field, seventy seven rows with Id's, zero rows without Id's, zero errors.
+4. Upsert Data
+  # Dependencies: 
+    For Set Working Org
+    For Selected Tab
+    For Record Id or External Id
+    Right click menu on Tab (SC-Calc -> Data -> Delete Records)
+  # Functions:
+    Use Id or ExternalId
+      Default use Id if ExternalKey_API_Name: is blank or null or Field_Name__c value does not exist
+      Display X icon on sheet tab (or alternative identifier)
+      If ExternalKey_API_Name: is NOT blank or null when Upsert is run use ExternalKey_API_Name: { Field_Name__c } as the External Id
+    Set ReadOnly Columns
+    Upsert data using Id Column or ExternalKey_API_Name: { Field_Name__c } where no Id inserts a record and a value updates a record.
+    Upsert data using query column header names for field mapping
+    After successfull upsert row Insert, update the Id column value the returned Id for that row and "API Response" column output "Successfully Inserted(Upsert) at {NOW()}"
+      Else output error to "API Response" column cell for the row 
+    After successfull upsert row Update, in the "API Response" column output "Successfully Updated(Upsert) at {NOW()}"
+      Else output error to "API Response" column cell for the row  
+5. Delete Data
+  # Dependencies: 
+    For Set Working Org
+    For Selected Tab
+    For Record Id or External Id
+    Selected Range of Id's
+    Right click menu on cell or cell range (SC-Calc -> Data -> Delete Records)
+  # Functions:
+    For a selected range of Id's 
+    On right click menu, "Delete Rows"
+    Modal Displays: "You have selected {range row count} records to be deleted. This will delete data in the working org! Do you want to proceed?" Okay and Cancel buttons.
+    Okay Button runs delete command on selected Id's
+    After deleting on successfull row delete change the row Id Column value to "Deleted" and "API Response" column output "Successfully Deleted at {NOW()}"
+      Else output error to "API Response" column cell for the row
+6. Insert Data TODO:
+7. Update Data TODO:
+    

@@ -1,0 +1,19 @@
+1. SF CLI Integration
+- Can run SF CLI commands
+- SF CLI is up to date
+- SF CLI correctly lists connected Salesforce orgs
+- SF CLI retrieves details of the working Salesforce org.
+2. Configuration Management:
+- Validation of the configuration file structure.
+- Validation of SOQL Queries in default config file.
+- Validation Parameter values in default config file. 
+3. Querying Salesforce Data
+- Authenitcate via 'sf org login web -a WorkingOrgAlias'
+- Get Salesforce Session from WorkingOrgAlias `sf org display --json --targetusername WorkingOrgAlias` 
+- Query Salesforce data via Rest API `{session.instanceUrl}/services/data/{APIVersion}/query?q=${encodeURIComponent(query)} and populate spreadsheet
+- Async run multiple queries and populate or create sheets/tabs within the worksheet for different objects
+4. Data Upserts
+- Upserting data to Salesforce via rest API. 
+5. Spreadsheet Manipulations
+- Upsert to salesforce based on row ID or External Id
+6. Error Handling and Validation

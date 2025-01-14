@@ -158,6 +158,9 @@ src/__pycache__/
 # Temporary files
 *.tmp
 *.swp
+temp.txt
+test_cases.txt
+/Temp
 
 # Logs
 *.log

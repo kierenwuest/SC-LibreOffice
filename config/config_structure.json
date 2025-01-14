@@ -1,0 +1,15 @@
+{
+  "configName": "",
+  "sfdcApiVersion": "",
+  "validScPkgVersion": "",
+  "workingOrgAlias": "",
+  "objectQueries": {
+    "ObjectNamePlaceholder": {
+      "soql": "",
+      "primaryKey": "",
+      "readOnlyFields": [],
+      "requiredFields": [],
+      "dependentObjects": []
+    }
+  }
+}
